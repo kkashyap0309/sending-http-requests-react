@@ -7,3 +7,20 @@ export async function getAvailablePlaces() {
 
   return resData.places;
 }
+
+export async function updatePlaces(places) {
+  const updateResponse = await fetch("http://localhost:3000/user-places", {
+    method: "PUT",
+    body: JSON.stringify({ places }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!updateResponse.ok) {
+    throw new Error();
+  }
+
+  const resData = await updateResponse.json();
+  return resData.message;
+}
