@@ -1,11 +1,11 @@
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 
 import Places from "./components/Places.jsx";
 import Modal from "./components/Modal.jsx";
 import DeleteConfirmation from "./components/DeleteConfirmation.jsx";
 import logoImg from "./assets/logo.png";
 import AvailablePlaces from "./components/AvailablePlaces.jsx";
-import { updatePlaces } from "./httpUtil.js";
+import { updatePlaces, getUserSelectedPlaces } from "./httpUtil.js";
 import ErrorPage from "./components/Error.jsx";
 
 function App() {
@@ -25,6 +25,23 @@ function App() {
   function handleStopRemovePlace() {
     setModalIsOpen(false);
   }
+
+  useEffect(() => {
+    async function fetchUserSelectedPlaces() {
+      try {
+        const userSelectedPlaces = await getUserSelectedPlaces();
+        setUserPlaces(userSelectedPlaces);
+      } catch (error) {
+        console.log("something went wrong while fetching user selected places");
+        setErrorOccurred({
+          msg: "something went wrong while fetching user selected places",
+        });
+        //.. throw error
+      }
+    }
+
+    fetchUserSelectedPlaces();
+  }, []);
 
   async function handleSelectPlace(selectedPlace) {
     setUserPlaces((prevPickedPlaces) => {
@@ -48,26 +65,31 @@ function App() {
     }
   }
 
-  const handleRemovePlace = useCallback(async function handleRemovePlace() {
-    setUserPlaces((prevPickedPlaces) =>
-      prevPickedPlaces.filter((place) => place.id !== selectedPlace.current.id)
-    );
-    try {
-      const selectedPlaceToRemove = userPlaces.filter(
-        (place) => place.id !== selectedPlace.current.id
+  const handleRemovePlace = useCallback(
+    async function handleRemovePlace() {
+      setUserPlaces((prevPickedPlaces) =>
+        prevPickedPlaces.filter(
+          (place) => place.id !== selectedPlace.current.id
+        )
       );
-      await updatePlaces(selectedPlaceToRemove);
-    } catch (error) {
-      console.log("something went wrong while deleting selected places");
-      setUserPlaces(userPlaces);
-      setErrorOccurred({
-        msg: "something went wrong while deleting selected places",
-      });
-      //.. throw error
-    }
+      try {
+        const selectedPlaceToRemove = userPlaces.filter(
+          (place) => place.id !== selectedPlace.current.id
+        );
+        await updatePlaces(selectedPlaceToRemove);
+      } catch (error) {
+        console.log("something went wrong while deleting selected places");
+        setUserPlaces(userPlaces);
+        setErrorOccurred({
+          msg: "something went wrong while deleting selected places",
+        });
+        //.. throw error
+      }
 
-    setModalIsOpen(false);
-  }, [userPlaces]);
+      setModalIsOpen(false);
+    },
+    [userPlaces]
+  );
 
   function closeErrorModal() {
     setErrorOccurred(null);
